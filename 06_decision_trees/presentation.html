@@ -160,13 +160,11 @@ tree_clf.fit(X_iris, y_iris)</code></pre>
         <section id="featureChoiceSection">
             <h3 id="featureChoice">Choosing feature (gini)</h3>
             <div id="featureChoicePlot">
-
             </div>
         </section>
         <section id="decisionTreeSection">
             <h3>Decision Tree construction</h3>
             <div id="decisionTreePlot">
-
             </div>
         </section>
         <section>
@@ -174,6 +172,9 @@ tree_clf.fit(X_iris, y_iris)</code></pre>
             <div style="font-size: 24px; line-height: 36px;">
                 <a href="https://homl.info">Hands-On Machine Learning</a><br>
                 <a href="https://revealjs.com">Reveal.js</a><br>
+                <a href="https://d3js.org">D3.js</a><br>
+                <a href="https://www.npmjs.com/package/numjs">numjs.js</a><br>
+                <a href="https://mauriciopoppe.github.io/function-plot/">function-plot</a><br>
             </div>
         </section>
         <section>
@@ -253,6 +254,19 @@ class SubPlot {
     // Add event handler to the main area
     on(event, f) {
         this.eventRect.on(event, f);
+    }
+
+    // Display a message
+    message(text) {
+        if(!this.msg) {
+            this.msg = this.bgLayer.insert("text")
+            .attr("x", this.scaleX(0.5))
+            .attr("y", this.scaleY(0.5))
+            .attr("text-anchor", "middle");
+        }
+        this.msg.interrupt().attr("fill", "black").text(text);
+
+        this.msg.transition().duration(2000).attr("fill", "rgba(0, 0, 0, 0)");
     }
 
     // Display a path from series of x,y coordinates
@@ -346,6 +360,11 @@ const classFills = [ // Fills for tree nodes
     "rgba(0,0,0,0.2)",
     "rgba(255,255,0,0.2)",
     "rgba(0,255,255,0.2)"
+];
+const classFillsImpure = [ // Fills for tree nodes
+    "rgba(0,0,0,0.1)",
+    "rgba(255,255,0,0.1)",
+    "rgba(0,255,255,0.1)"
 ]
 const winnerColor = "white";
 const loserColor = "rgba(0,0,0,0.5)";
@@ -390,7 +409,11 @@ function entropy(values, count) {
     return result;
 }
 
+// Hyperparameters
 var impurity = gini;
+var min_samples_leaf = 1;
+var max_depth = null;
+
 // set the dimensions and margins of the graph
 const width = 800;
 const height = 600;
@@ -399,14 +422,21 @@ const margin = [100, 100];
 
 // Split data based on given feature number using impurity function
 // retainImpurities - calculate all the impurity scores evaluated when making decision
-function bestSplit(data, feature, impurity, retainImpurities=true) {
+function bestSplit(data, feature, impurity, retainImpurities=true, min_samples_leaf=1) {
     // Get feature values + classes
     const n = data.length;
     const values = data.map((x) => x[feature]);
     const classes = data.map((x) => x[0]);
 
+    // Result
+    var best = Infinity; // best impurity
+    var worst = -Infinity; // worst impurity
+    var bestSplit = null; // Best found split
+
     // Class counts
     const classCounts = countClasses(data);
+
+    const isPure = classCounts[1]==0 || classCounts[2]==0;
 
     // Order by our axis
     const order = nj.arange(values.length).tolist();
@@ -415,9 +445,6 @@ function bestSplit(data, feature, impurity, retainImpurities=true) {
     // Current class count
     const leftValues = [0, 0, 0];
     const rightValues = classCounts.slice();
-    var best = Infinity;
-    var worst = -Infinity;
-    var bestSplit = null;
 
     const impurities = [];
     for(var i = 0; i <= n; i++) {
@@ -455,8 +482,12 @@ function bestSplit(data, feature, impurity, retainImpurities=true) {
         }
         if(total < best) {
             best = total;
-            if(i>0) {
-                bestSplit = threshold;
+            if(!isPure && (leftCount<min_samples_leaf || rightCount<min_samples_leaf)) {
+                // Do not consider this split because leaf too small or pure node
+            } else {
+                if(i>0) {
+                    bestSplit = threshold;
+                }
             }
         }
     }
@@ -476,7 +507,8 @@ class DecisionTree {
         this.svg = this.main
             .append("svg")
             .attr("width", width)
-            .attr("height", height);
+            .attr("height", height)
+            .style("user-select", "none");
 
         this.mainPlot = new SubPlot(
             d3.scaleLinear().domain([0, 1]).range([ margin[0], width-margin[0] ]),
@@ -527,6 +559,10 @@ class DecisionTree {
             activePlot=null;
         }
     }
+
+    message(text) {
+        this.mainPlot.message(text);
+    }
 }
 
 class DecisionTreeGini extends DecisionTree {
@@ -563,8 +599,8 @@ class DecisionTreeGini extends DecisionTree {
     }
 
     update() {
-        const {split:split1, best:best1, worst:worst1, impurities:impurities1} = bestSplit(data, 1, impurity);
-        const {split:split2, best:best2, worst:worst2, impurities:impurities2} = bestSplit(data, 2, impurity);
+        const {split:split1, best:best1, worst:worst1, impurities:impurities1} = bestSplit(data, 1, impurity, true, min_samples_leaf);
+        const {split:split2, best:best2, worst:worst2, impurities:impurities2} = bestSplit(data, 2, impurity, true, min_samples_leaf);
         var worst = Math.max(worst1, worst2);
         var best = Math.min(best1, best2);
         if(worst==best) {
@@ -604,8 +640,8 @@ class DecisionTreeFull extends DecisionTree {
     }
 
     // Recursively form tree
-    makeTree(data) {
-        if(data.length<=1) {
+    makeTree(data, depth=1) {
+        if(data.length<=min_samples_leaf || (max_depth && depth>max_depth)) {
             // Terminate calculation by summing all classes
             return { 
                 leaf: true,
@@ -617,7 +653,7 @@ class DecisionTreeFull extends DecisionTree {
         var split = 0; // Position of the split
         var best = Infinity; // Best split value
         for(var f=1; f<=2; f++) {
-            const { split: featureSplit, best: featureBest } = bestSplit(data, f, impurity, false);
+            const { split: featureSplit, best: featureBest } = bestSplit(data, f, impurity, false, min_samples_leaf);
             if(featureSplit && featureBest < best) {
                 split = featureSplit;
                 best = featureBest;
@@ -642,8 +678,8 @@ class DecisionTreeFull extends DecisionTree {
             }
         }
 
-        const leftTree = this.makeTree(dataLeft);
-        const rightTree = this.makeTree(dataRight);
+        const leftTree = this.makeTree(dataLeft, depth+1);
+        const rightTree = this.makeTree(dataRight, depth+1);
 
         return {
             leaf: false,
@@ -658,11 +694,18 @@ class DecisionTreeFull extends DecisionTree {
     getTreeRects(tree, rect={l:0, t:0, r:1, b:1}, rects=[]) {
         if(tree.leaf) {
             if(tree.values[1]>tree.values[2]) {
-                rect.fill = classFills[1]; // Winner is feature 1
+                 // Winner is feature 1
+                if(tree.values[2]==0)
+                    rect.fill = classFills[1];
+                else 
+                    rect.fill = classFillsImpure[1];
             } else if(tree.values[1]==tree.values[2]) {
                 rect.fill = classFills[0];
             } else {
-                rect.fill = classFills[2];
+                if(tree.values[1]==0)
+                    rect.fill = classFills[2];
+                else
+                    rect.fill = classFillsImpure[2];
             }
             rects.push(rect);
         } else {
@@ -765,6 +808,8 @@ d3.select("body").on("keydown", function(event) {
                     origData.length = 0;
                 }
                 data.length = 0;
+                min_samples_leaf=1;
+                max_depth=null;
             } else if(event.code=="KeyZ") { // Z - undo
                 if(rotating) {
                     origData.length = Math.max(origData.length-1, 0);
@@ -777,7 +822,26 @@ d3.select("body").on("keydown", function(event) {
                     rotationTimeStart = Date.now();
                     requestAnimationFrame(rotate);
                 }
-            }
+            } else if(event.code=="KeyM") { // min_samples_leaf increase
+                if(event.shiftKey) {
+                    min_samples_leaf = Math.max(1, min_samples_leaf-1);
+                } else {
+                    min_samples_leaf++;
+                }
+                if(activePlot) {
+                    activePlot.message("min_samples_leaf = " + min_samples_leaf);
+                }
+            } else if(event.code=="KeyD") { // min_samples_leaf increase
+                if(event.shiftKey) {
+                    max_depth = Math.max(1, max_depth-1);
+                } else {
+                    max_depth++;
+                }
+                if(activePlot) {
+                    activePlot.message("max_depth = " + max_depth);
+                }
+            }            
+
             if(activePlot) {
                 activePlot.update();
             }
