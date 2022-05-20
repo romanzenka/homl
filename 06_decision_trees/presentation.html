@@ -75,9 +75,6 @@
             2<sup>nd</sup> edition<br/>
             <a href="https://github.com/ageron/handson-ml3/blob/main/06_decision_trees.ipynb">Chapter 6</a><br/>
         </section>
-        <section>
-            <a href="https://github.com/romanzenka/homl">github.com / romanzenka / homl</a>
-        </section>
         <section >
             <div class="twocolumn">
                 <div>
@@ -178,6 +175,9 @@ tree_clf.fit(X_iris, y_iris)</code></pre>
                 <a href="https://homl.info">Hands-On Machine Learning</a><br>
                 <a href="https://revealjs.com">Reveal.js</a><br>
             </div>
+        </section>
+        <section>
+            <a href="https://github.com/romanzenka/homl">github.com / romanzenka / homl</a>
         </section>
     </div>
 </div>
@@ -788,7 +788,7 @@ const decisionTreePlot = new DecisionTreeFull("#decisionTreePlot");
 
 // Skip to second to last slide on open presentation
 Reveal.addEventListener( 'ready', function( event ) {
-    Reveal.slide(Reveal.getSlides().length - 2);
+    // Reveal.slide(Reveal.getSlides().length - 2);
     Reveal.addEventListener( 'slidechanged', event => {
         if(event.currentSlide.id=="featureChoiceSection") {
             featureChoicePlot.activate();
