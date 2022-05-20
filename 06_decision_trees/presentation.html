@@ -160,8 +160,15 @@ tree_clf.fit(X_iris, y_iris)</code></pre>
             <!-- see code at the end of presentation -->
             </div>
         </section>
-        <section>
-            <div id="decisionTree">
+        <section id="featureChoiceSection">
+            <h3 id="featureChoice">Choosing feature (gini)</h3>
+            <div id="featureChoicePlot">
+
+            </div>
+        </section>
+        <section id="decisionTreeSection">
+            <h3>Decision Tree construction</h3>
+            <div id="decisionTreePlot">
 
             </div>
         </section>
@@ -186,11 +193,6 @@ tree_clf.fit(X_iris, y_iris)</code></pre>
     ]
   });
 
-// Skip to second to last slide on open presentation
-Reveal.addEventListener( 'ready', function( event ) {
-    Reveal.slide(Reveal.getSlides().length - 2);
-});
-
 // giniVsEntropy plot
 functionPlot({
     target: "#giniVsEntropy",
@@ -213,71 +215,158 @@ functionPlot({
     ]
 });
 
-// Tree editor
+// Tree editor ---------------
 
-function decisionTree() {
-    const classColors = [
-        "red", // Do not use!!
-        "yellow",
-        "aqua"
-    ];
+// A plot within the big plot
+// Has helper methods to draw a simple chart
+// and a marker point
+class SubPlot {
+    // flip - any x/y input will get transposed
+    constructor(scaleX, scaleY, svg, flip=false) {
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
+        this.flip = flip;
+        this.dim1 = flip ? 1 : 0;
+        this.dim2 = flip ? 0 : 1;
 
-    const data = [
-    ];
+        // Future possibilities
+        this.path = null;
+        this.marker = null;
 
-    // set the dimensions and margins of the graph
-    const width = 800;
-    const height = 600;
+        const xRange = scaleX.range();
+        const yRange = scaleY.range();
 
-    // Add X axis
-    const x = d3.scaleLinear().domain([0, 1]).range([ 0, width ]);
+        this.bgLayer = svg.append("g"); // Background
+        this.lowLayer = svg.append("g"); // Low layer (for rectangles)
+        this.g = svg.append("g"); // Main group for drawings
 
-    // Add Y axis
-    const y = d3.scaleLinear().domain([0, 1]).range([ height, 0]);
-
-    // X for impurity
-    const xi = d3.scaleLinear().domain([0, 1]).range([ 0, width ]);
-    // Y for impurity
-    const yi = d3.scaleLinear().domain([0, 1]).range([ height, height * 0.8 ]);
-
-    // append the svg object to the body of the page
-    const main = d3.select("#decisionTree");
-
-    function addPoint(event) {
-        const p = d3.pointer(event);
-        const newPoint = 
-        [
-            event.shiftKey ? 1 : 2, // Feature number, 1-based
-            x.invert(p[0]),
-            y.invert(p[1])
-        ];
-        data.push(newPoint);
-        update();
+        // Overlay event handler
+        this.eventRect = svg
+            .append("rect")
+            .attr("width", Math.abs(xRange[1]-xRange[0]))
+            .attr("height", Math.abs(yRange[1]-yRange[0]))
+            .attr("x", Math.min(xRange[0], xRange[1]))
+            .attr("y", Math.min(yRange[0], yRange[1]))
+            .attr("fill", "rgba(0,0,0,0)");
     }
-        
-    const svg = main
-        .append("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .on('click', function(event) {
-            addPoint(event);
-        });
 
-    const mainGroup = svg
-        .append("g");
+    // Add event handler to the main area
+    on(event, f) {
+        this.eventRect.on(event, f);
+    }
 
-    const giniChart = svg
-        .append("g")
-        .append("path")
-        .style("stroke", "white")
-        .style("fill", "none");
+    // Display a path from series of x,y coordinates
+    // Honor the "flip"
+    setPath(points) {
+        if(this.path==null) {
+            this.path = this.g
+                .append("path")
+                .style("stroke", "white")
+                .style("fill", "none");
+        }
 
-    const giniHoriz = svg
-        .append("g")
-        .append("line")
-        .style("stroke", "black");
+        const d = d3.path();
 
-    function gini(values, count) {
+        for(var i=0; i<points.length; i++) {
+            var point = points[i];
+            var xx = point[this.dim1];
+            var yy = point[this.dim2];
+            var xg = this.scaleX(xx);
+            var yg = this.scaleY(yy);
+            if(i==0) {
+                d.moveTo(xg, yg);
+            } else
+                d.lineTo(xg, yg);
+        }
+
+        this.path.attr("d", d);
+    }
+
+    setMarker(position, color) {
+        if(!this.marker) {
+            this.marker = this.g
+                .append("circle")
+                .attr("r", 5);
+        }
+        var xp = this.scaleX(position[this.dim1]);
+        var yp = this.scaleY(position[this.dim2]);
+        const display = (xp === undefined || yp===undefined) ? "none" : "auto";
+        this.marker
+            .attr("cx", xp)
+            .attr("cy", yp)
+            .style("fill", color)
+            .attr("display", display);
+    }
+
+    setBackground(color) {
+        if(!this.bgRect) {
+            this.bgRect = this.bgLayer.append("rect")
+            .attr("x", this.scaleX(0))
+            .attr("y", this.scaleY(1))
+            .attr("width", this.scaleX(1)-this.scaleX(0))
+            .attr("height", this.scaleY(0)-this.scaleY(1));
+        }
+        this.bgRect.style("fill", color);
+    }
+
+    drawPoints(data) {
+        const {scaleX, scaleY, dim1, dim2} = this;
+        this.g
+            .selectAll("circle")
+                .data(data)
+                .join("circle")
+                    .attr("cx", function (d) { return scaleX(d[1+dim1]); } )
+                    .attr("cy", function (d) { return scaleY(d[1+dim2]); } )
+                    .attr("r", 3)
+                    .style("fill", function(d) { return classColors[d[0]]; });
+    }
+
+    drawRects(data) {
+        const {scaleX, scaleY} = this;
+        this.lowLayer
+            .selectAll("rect")
+                .data(data)
+                .join("rect")
+                    .attr("x", function (d) { return scaleX(d.l)+1; } )
+                    .attr("y", function (d) { return scaleY(d.b)+1; } )
+                    .attr("width", function (d) { return scaleX(d.r)-scaleX(d.l)-2; } )
+                    .attr("height", function (d) { return scaleY(d.t)-scaleY(d.b)-2; } )
+                    .style("fill", (d) => d.fill);
+    }
+}
+
+// Decision tree data (shared)
+const data = [/* [class, feature 1, feature 2] */];
+const classColors = [
+    "red", // Do not use - feature 0 is reserved for classes in this scheme
+    "yellow",
+    "aqua"
+];
+const classFills = [ // Fills for tree nodes
+    "rgba(0,0,0,0.2)",
+    "rgba(255,255,0,0.2)",
+    "rgba(0,255,255,0.2)"
+]
+const winnerColor = "white";
+const loserColor = "rgba(0,0,0,0.5)";
+
+// Rotation support
+var rotating = false;
+var origData = null;
+var rotationTimeStart = 0;
+var rotPerSecond = Math.PI / 10;
+
+// Return class counts (0-th feature is class)
+function countClasses(data) {
+    var result = [0, 0, 0];
+    for(var i=0; i<data.length; i++) {
+        result[data[i][0]]++;
+    }
+    return result;
+}
+
+// Impurity functions ---------
+function gini(values, count) {
         var result = 0;
         for(var i=1; i<values.length; i++) {
             if(count>0) {
@@ -288,111 +377,429 @@ function decisionTree() {
         return 1 - result;
     }
 
-    function bestGini(feature) {
-        // Get feature values + classes
-        const n = data.length;
-        const values = data.map((x) => x[feature]);
-        const classes = data.map((x) => x[0]);
-
-        // Class counts
-        const classCounts = [0, 0, 0];
-        for(var i = 0; i < n; i++) {
-            classCounts[classes[i]]++;
-        }
-
-        // Order by our axis
-        const order = nj.arange(values.length).tolist();
-        order.sort((i, j) => values[i] - values[j]);
-
-        // Current class count
-        const leftValues = [0, 0, 0];
-        const rightValues = classCounts.slice();
-        var best = Infinity;
-        var worst = -Infinity;
-        var bestSplit = 0;
-
-        const ginis = [];
-        for(var i = 0; i <= n; i++) {
-            // Add point to left node
-            var j, value, cls, threshold;
-            if(i==0) {
-                threshold = values[order[0]];
-            } else {
-                // Update
-                j = order[i-1];
-                value = values[j];
-                cls = classes[j];
-                leftValues[cls]++;
-                rightValues[cls]--;
-                if(i==n) {
-                    threshold = values[order[n-1]];
-                } else {
-                    threshold = (value + values[order[i]]) / 2;
-                }
-            } 
-
-            const leftCount = i;
-            const rightCount = n-leftCount;
-            const impurityLeft = gini(leftValues, leftCount);
-            const impurityRight = gini(rightValues, rightCount);
-            const weightedLeft = impurityLeft * leftCount / n;
-            const weighedRight = impurityRight * rightCount / n;
-
-            const total = weightedLeft + weighedRight;
-            ginis.push([threshold, total]);
-            if(total > worst) {
-                worst = total;
+function entropy(values, count) {
+    var result = 0;
+    for(var i=1; i<values.length; i++) {
+        if(count>0) {
+            const v = values[i]/count;
+            if(v>0) {
+                result -= v*Math.log2(v);
             }
-            if(total < best) {
-                best = total;
+        }
+    }
+    return result;
+}
+
+var impurity = gini;
+// set the dimensions and margins of the graph
+const width = 800;
+const height = 600;
+
+const margin = [100, 100];
+
+// Split data based on given feature number using impurity function
+// retainImpurities - calculate all the impurity scores evaluated when making decision
+function bestSplit(data, feature, impurity, retainImpurities=true) {
+    // Get feature values + classes
+    const n = data.length;
+    const values = data.map((x) => x[feature]);
+    const classes = data.map((x) => x[0]);
+
+    // Class counts
+    const classCounts = countClasses(data);
+
+    // Order by our axis
+    const order = nj.arange(values.length).tolist();
+    order.sort((i, j) => values[i] - values[j]);
+
+    // Current class count
+    const leftValues = [0, 0, 0];
+    const rightValues = classCounts.slice();
+    var best = Infinity;
+    var worst = -Infinity;
+    var bestSplit = null;
+
+    const impurities = [];
+    for(var i = 0; i <= n; i++) {
+        // Add point to left node
+        var j, value, cls, threshold;
+        if(i==0) {
+            threshold = values[order[0]];
+        } else {
+            // Update
+            j = order[i-1];
+            value = values[j];
+            cls = classes[j];
+            leftValues[cls]++;
+            rightValues[cls]--;
+            if(i==n) {
+                threshold = values[order[n-1]];
+            } else {
+                threshold = (value + values[order[i]]) / 2;
+            }
+        } 
+
+        const leftCount = i;
+        const rightCount = n-leftCount;
+        const impurityLeft = impurity(leftValues, leftCount);
+        const impurityRight = impurity(rightValues, rightCount);
+        const weightedLeft = impurityLeft * leftCount / n;
+        const weighedRight = impurityRight * rightCount / n;
+
+        const total = weightedLeft + weighedRight;
+        if(retainImpurities) {
+            impurities.push([threshold, total]);
+        }
+        if(total > worst) {
+            worst = total;
+        }
+        if(total < best) {
+            best = total;
+            if(i>0) {
                 bestSplit = threshold;
             }
         }
-        return {
-            split: bestSplit,
-            best: best,
-            worst: worst,
-            ginis: ginis
-        }
     }
-
-    function update() {
-        const {split:giniSplit, best, worst, ginis} = bestGini(1);
-
-        const path = d3.path();
-
-        for(var i=0; i<ginis.length; i++) {
-            var xg = xi(ginis[i][0]);
-            var yg = yi((ginis[i][1]-worst)/(best-worst));
-            if(i==0) {
-                path.moveTo(xg, yg);
-            } else
-                path.lineTo(xg, yg);
-        }
-
-        giniChart
-            .attr("d", path);
-
-        giniHoriz
-            .attr("x1", x(giniSplit))
-            .attr("y1", y(0))
-            .attr("x2", x(giniSplit))
-            .attr("y2", y(1));
-
-        mainGroup
-            .selectAll("circle")
-            .data(data)
-            .enter()
-            .append("circle")
-                .attr("cx", function (d) { return x(d[1]); } )
-                .attr("cy", function (d) { return y(d[2]); } )
-                .attr("r", 3)
-                .style("fill", function(d) { return classColors[d[0]]; });
+    return {
+        split: bestSplit,
+        best,
+        worst,
+        impurities
     }
-
-    update();
 }
-decisionTree();
+
+class DecisionTree {
+    constructor(element) {
+        // append the svg object to the body of the page
+        this.main = d3.select(element);
+            
+        this.svg = this.main
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        this.mainPlot = new SubPlot(
+            d3.scaleLinear().domain([0, 1]).range([ margin[0], width-margin[0] ]),
+            d3.scaleLinear().domain([0, 1]).range([ height - margin[1], 0]),
+            this.svg
+        );
+
+        this.mainPlot.on('click', (event) => this.addPoint(event));
+    }
+
+    addPoint(event) {
+        const p = d3.pointer(event);
+        var newPoint = 
+        [
+            event.shiftKey ? 1 : 2, // Feature number, 1-based
+            this.mainPlot.scaleX.invert(p[0]),
+            this.mainPlot.scaleY.invert(p[1])
+        ];
+
+        if(rotating) {
+            // Rotate the point back to original coordinates
+            newPoint = rotatePoint(newPoint, -rotationAngle());
+            origData.push(newPoint);
+        }
+
+        data.push(newPoint);
+        this.update();
+    }
+
+    update() {
+        this.mainPlot.drawPoints(data);
+
+        // Update slide title
+        if(impurity==gini) {
+            d3.select("#featureChoice").text("Choosing feature (Gini)");
+        } else if(impurity==entropy) {
+            d3.select("#featureChoice").text("Choosing feature (Entropy)");
+        }
+    }
+
+    activate() {
+        activePlot = this;
+        this.update();
+    }
+
+    deactivate() {
+        if(activePlot==this) {
+            activePlot=null;
+        }
+    }
+}
+
+class DecisionTreeGini extends DecisionTree {
+    constructor(element) {
+        super(element);
+
+        this.mainPlot.setBackground("rgba(0,0,0,0.2)");
+
+        this.giniX = new SubPlot(
+            d3.scaleLinear().domain([0, 1]).range([ margin[0], width-margin[0] ]),
+            d3.scaleLinear().domain([0, 1]).range([ height-5, height-margin[1] ]),
+            this.svg
+        );
+        this.giniX.setPath([[0,0], [1,0]], 1, 0);
+
+        this.giniY = new SubPlot(
+            d3.scaleLinear().domain([0, 1]).range([ 5, margin[0] ]),
+            d3.scaleLinear().domain([0, 1]).range([ height-margin[1], 0 ]),
+            this.svg,
+            true
+        );
+        this.giniY.setPath([[0,0], [1,0]], 1, 0);
+
+
+        this.markX = this.mainPlot.g
+            .append("line")
+            .style("stroke", "black")
+            .style("stroke-width", "2px");
+
+        this.markY = this.mainPlot.g
+            .append("line")
+            .style("stroke", "black")
+            .style("stroke-width", "2px");
+    }
+
+    update() {
+        const {split:split1, best:best1, worst:worst1, impurities:impurities1} = bestSplit(data, 1, impurity);
+        const {split:split2, best:best2, worst:worst2, impurities:impurities2} = bestSplit(data, 2, impurity);
+        var worst = Math.max(worst1, worst2);
+        var best = Math.min(best1, best2);
+        if(worst==best) {
+            worst=best+1;
+        }
+        // Scale so we can see better
+        this.giniX.scaleY.domain([best, worst]);
+        this.giniY.scaleX.domain([best, worst]);
+        this.giniX.setPath(impurities1);
+        this.giniX.setMarker([split1, best1], best1<best2 ? winnerColor : loserColor);
+        this.giniY.setPath(impurities2);
+        this.giniY.setMarker([split2, best2], best2<best1 ? winnerColor : loserColor);
+        const mx = this.mainPlot.scaleX(split1);
+        this.markX
+            .attr("x1", mx)
+            .attr("x2", mx)
+            .attr("y1", this.mainPlot.scaleY(0))
+            .attr("y2", this.mainPlot.scaleY(1))
+            .style("stroke", best1<best2 ? winnerColor : loserColor)
+            .attr("display", mx===undefined ? "none" : "auto");
+        const my = this.mainPlot.scaleY(split2);
+        this.markY
+            .attr("y1", my)
+            .attr("y2", my)
+            .attr("x1", this.mainPlot.scaleX(0))
+            .attr("x2", this.mainPlot.scaleX(1))
+            .style("stroke", best2<best1 ? winnerColor : loserColor)
+            .attr("display", my===undefined ? "none" : "auto");
+
+        super.update();
+    }
+}
+
+class DecisionTreeFull extends DecisionTree {
+    constructor(element) {
+        super(element);
+    }
+
+    // Recursively form tree
+    makeTree(data) {
+        if(data.length<=1) {
+            // Terminate calculation by summing all classes
+            return { 
+                leaf: true,
+                values: countClasses(data)
+            };
+        }
+        // Best splitting feature and split position so far
+        var feature = 0; // Best feature to split
+        var split = 0; // Position of the split
+        var best = Infinity; // Best split value
+        for(var f=1; f<=2; f++) {
+            const { split: featureSplit, best: featureBest } = bestSplit(data, f, impurity, false);
+            if(featureSplit && featureBest < best) {
+                split = featureSplit;
+                best = featureBest;
+                feature = f;
+            }
+        }
+        if(feature==0) {
+            // We could not split anymore - the node was pure
+            return { 
+                leaf: true,
+                values: countClasses(data)
+            };
+        }
+        // Now we know which feature to split by, and where
+        const dataLeft=[];
+        const dataRight=[];
+        for(var i=0; i<data.length; i++) {
+            if(data[i][feature] <= split) {
+                dataLeft.push(data[i]);
+            } else {
+                dataRight.push(data[i]);
+            }
+        }
+
+        const leftTree = this.makeTree(dataLeft);
+        const rightTree = this.makeTree(dataRight);
+
+        return {
+            leaf: false,
+            split: split,
+            feature: feature,
+            left: leftTree,
+            right: rightTree,
+            values: [0, leftTree.values[1]+rightTree.values[1], leftTree.values[2]+rightTree.values[2]]
+        }
+    }
+
+    getTreeRects(tree, rect={l:0, t:0, r:1, b:1}, rects=[]) {
+        if(tree.leaf) {
+            if(tree.values[1]>tree.values[2]) {
+                rect.fill = classFills[1]; // Winner is feature 1
+            } else if(tree.values[1]==tree.values[2]) {
+                rect.fill = classFills[0];
+            } else {
+                rect.fill = classFills[2];
+            }
+            rects.push(rect);
+        } else {
+            var rect1, rect2;
+            if(tree.feature==1) {
+                // Split by x
+                rect1 = {
+                    ...rect,
+                    r: tree.split
+                };
+                rect2 = {
+                    ...rect,
+                    l: tree.split
+                };
+            } else {
+                // Split by x
+                rect1 = {
+                    ...rect,
+                    b: tree.split
+                };
+                rect2 = {
+                    ...rect,
+                    t: tree.split
+                };
+            }
+            this.getTreeRects(tree.left, rect1, rects);
+            this.getTreeRects(tree.right, rect2, rects);
+        }
+        return rects;
+    }
+
+    update() {
+        // Recursively form the decision tree
+        const tree = this.makeTree(data);
+
+        // Recursively draw the tree
+        const rects = this.getTreeRects(tree);
+        this.mainPlot.drawRects(rects);
+        super.update();
+    }
+}
+
+function rotationAngle() {
+    const time = (Date.now() - rotationTimeStart) / 1000.0;
+    angle = time * rotPerSecond;
+    return angle;
+}
+
+function rotatePoint(p, angle) {
+    const x = p[1] - 0.5;
+    const y = p[2] - 0.5;
+    const result = [
+        p[0],
+        Math.cos(angle)*x-Math.sin(angle)*y + 0.5,
+        Math.sin(angle)*x+Math.cos(angle)*y + 0.5
+    ];
+    return result;
+}
+
+function clampPoint(p) {
+    const result = [
+        p[0],
+        Math.max(0, Math.min(1, p[1])),
+        Math.max(0, Math.min(1, p[2]))
+    ];
+    return result;
+}
+
+
+function rotate() {
+    if(!activePlot) {
+        return;
+    }
+
+    const angle = rotationAngle();
+
+    for(var i = 0; i < origData.length; i++) {
+        data[i] = clampPoint(rotatePoint(origData[i], angle));
+    }
+
+    activePlot.update();
+
+    if(rotating) {
+        requestAnimationFrame(rotate);
+    }
+}
+
+// Global keyboard handler
+var activePlot = null;
+d3.select("body").on("keydown", function(event) {
+            if(event.code=="KeyG") {
+                if(impurity==gini) {
+                    impurity=entropy;
+                } else {
+                    impurity=gini;
+                }
+            }
+            else if(event.code=="KeyQ") { // Quit - reset data
+                if(rotating) {
+                    origData.length = 0;
+                }
+                data.length = 0;
+            } else if(event.code=="KeyZ") { // Z - undo
+                if(rotating) {
+                    origData.length = Math.max(origData.length-1, 0);
+                }
+                data.length = Math.max(data.length-1, 0);
+            } else if(event.code=="KeyR") { // R - rotate
+                rotating = !rotating;
+                if(rotating) {
+                    origData = JSON.parse(JSON.stringify(data));
+                    rotationTimeStart = Date.now();
+                    requestAnimationFrame(rotate);
+                }
+            }
+            if(activePlot) {
+                activePlot.update();
+            }
+        });
+
+const featureChoicePlot = new DecisionTreeGini("#featureChoicePlot");
+const decisionTreePlot = new DecisionTreeFull("#decisionTreePlot");
+
+// Skip to second to last slide on open presentation
+Reveal.addEventListener( 'ready', function( event ) {
+    Reveal.slide(Reveal.getSlides().length - 2);
+    Reveal.addEventListener( 'slidechanged', event => {
+        if(event.currentSlide.id=="featureChoiceSection") {
+            featureChoicePlot.activate();
+        } else if(event.currentSlide.id=="decisionTreeSection") {
+            decisionTreePlot.activate();
+        } else {
+            featureChoicePlot.deactivate();
+            decisionTreePlot.deactivate();
+        }
+    });
+});
 
 </script>
 </body>
