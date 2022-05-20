@@ -308,7 +308,7 @@ function decisionTree() {
         const leftValues = [0, 0, 0];
         const rightValues = classCounts.slice();
         var best = Infinity;
-        var worst = 0;
+        var worst = -Infinity;
         var bestSplit = 0;
 
         const ginis = [];
@@ -319,15 +319,15 @@ function decisionTree() {
                 threshold = values[order[0]];
             } else {
                 // Update
-                j = order[i];
+                j = order[i-1];
                 value = values[j];
                 cls = classes[j];
                 leftValues[cls]++;
                 rightValues[cls]--;
-                if(i==n-1) {
+                if(i==n) {
                     threshold = values[order[n-1]];
                 } else {
-                    threshold = (value + values[order[i+1]]) / 2;
+                    threshold = (value + values[order[i]]) / 2;
                 }
             } 
 
@@ -348,12 +348,6 @@ function decisionTree() {
                 bestSplit = threshold;
             }
         }
-
-        if(best==worst) {
-            worst = worst+0.1;
-            best = best-0.1
-        }
-
         return {
             split: bestSplit,
             best: best,
