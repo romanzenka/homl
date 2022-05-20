@@ -431,6 +431,7 @@ function bestSplit(data, feature, impurity, retainImpurities=true, min_samples_l
     // Result
     var best = Infinity; // best impurity
     var worst = -Infinity; // worst impurity
+    var win = Infinity; // Winning impurity
     var bestSplit = null; // Best found split
 
     // Class counts
@@ -482,10 +483,13 @@ function bestSplit(data, feature, impurity, retainImpurities=true, min_samples_l
         }
         if(total < best) {
             best = total;
-            if(!isPure && (leftCount<min_samples_leaf || rightCount<min_samples_leaf)) {
+        }
+        if(total < win) {
+            if(isPure || (leftCount<min_samples_leaf || rightCount<min_samples_leaf)) {
                 // Do not consider this split because leaf too small or pure node
             } else {
                 if(i>0) {
+                    win = total;
                     bestSplit = threshold;
                 }
             }
