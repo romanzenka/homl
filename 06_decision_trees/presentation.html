@@ -1,0 +1,405 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css" integrity="sha512-ITH3NSfntO7uI5n+BnxGNXpzDUoOsmAXuG37UDONLxNYIdc0EBBOOQ1xyc+t9ag9ETSuBXFApx+Rod0uURfDYw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/moon.min.css" integrity="sha512-mzpbI+YpB+bIH9gpH3cBq4u5+YvyAikkgAR4SODr5ZpzBZZtLddurEa5LoJRqRfVc6IUfqj6klr0e9KJjUtKHw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/monokai.min.css" integrity="sha512-z8wQkuDRFwCBfoj7KOiu1MECaRVoXx6rZQWL21x0BsVVH7JkqCp1Otf39qve6CrCycOOL5o9vgfII5Smds23rg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/highlight.min.js" integrity="sha512-U3fPDUX5bMrn1wnYqjaK44MFA9E6MKS+zPAg9WPAGF5XhReBeDj3FGaA831CjueG+YJxYA3WaO/m33kMIoOs/A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/math/math.min.js" integrity="sha512-pIUSGiNwAKHXxIcFxTZZ6RC536f6dHQn3LPYUmilYzayjdH4C4GUNo9T9a6VbkUh3rHSsM52nG8kWOg+16oLFg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/function-plot/1.22.8/function-plot.js" integrity="sha512-5q5FX8Fdy/bUEurwyMuC8g6Jv083LrK4yry74q0Xl1NTXsRio0h1BRiRkRwsTP1CJ92zduGh4ug4RBUPzmT3wA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.4.4/d3.min.js" integrity="sha512-hnFpvCiJ8Fr1lYLqcw6wLgFUOEZ89kWCkO+cEekwcWPIPKyknKV1eZmSSG3UxXfsSuf+z/SgmiYB1zFOg3l2UQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numjs/0.16.1/numjs.min.js" integrity="sha512-OSMx44HuCHhy3eXrRbRpRX47stz3U4WITFjPlznK4rxqQQM0nj4lK6u0UcyaCQcWTUNUDKHCLHoLqwmEwygE9w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <style type="text/css">
+        .smallCode code {
+            font-size: 20px;
+            line-height: 30px;
+        }
+
+        c, ch, cd {
+            display: inline-block;
+            font-family: monospace;
+        }
+
+        ch { /* Code highlight */
+            color: white;
+        }
+
+        c { /* Inline code */
+            color: #717680;
+        }
+
+        cd { /* Inline code default */
+            color: #a6e22e;
+        }
+
+        im { color: white }
+
+        ::selection {
+            background: #ffb7b7;
+        }
+
+        .twocolumn {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 10px;
+            text-align: left;
+        }
+
+        .function-plot .tick text {
+            font-size: 20px;
+        }
+        .function-plot .tick line {
+            stroke-width: 2px;
+        }
+        .function-plot .annotations text {
+            font-size: 20px;
+            fill: white;
+        }
+        .function-plot .annotations path {
+            stroke: black;
+            stroke-width: 2px;
+        }
+    </style>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section id="home">
+            <h1>Decision Trees</h1>
+            Roman Ženka<br>
+            <br/>
+            <a href="https://homl.info">Hands-On Machine Learning</a><br/>
+            2<sup>nd</sup> edition<br/>
+            <a href="https://github.com/ageron/handson-ml3/blob/main/06_decision_trees.ipynb">Chapter 6</a><br/>
+        </section>
+        <section>
+            <a href="https://github.com/romanzenka/homl">github.com / romanzenka / homl</a>
+        </section>
+        <section >
+            <div class="twocolumn">
+                <div>
+                    <h3>Classification</h3>
+                    <img src="img/classification.png"/>
+                    Node represents a class (or mixture of them)
+                </div>
+                <div>
+                    <h3>Regression</h3>
+                    <img src="img/regression.png"/>
+                    Node represents a&nbsp;number
+                </div>
+            </div>
+        </section>
+        <section>
+            <pre class="smallCode"><code class="python" data-line-numbers="9-10">from sklearn.datasets import load_iris
+from sklearn.tree import DecisionTreeClassifier
+
+iris = load_iris(as_frame=True)
+X_iris = iris.data[["petal length (cm)", 
+                    "petal width (cm)"]].values
+y_iris = iris.target
+
+tree_clf = DecisionTreeClassifier(max_depth=2, random_state=42)
+tree_clf.fit(X_iris, y_iris)</code></pre>            
+        </section>
+        <section>
+            <h2>Parameters</h2>
+            <ul>
+                <li><ch>criterion</ch> - what is a "good node"?<br/>
+                    <cd>"gini"</cd>, <c>"entropy"</c>
+                <li><ch>splitter</ch> - feature to use for split<br/>
+                    <cd>"best"</cd>, <c>"random"</c>
+                <li><ch>max_depth</ch> - longest "branch" (<cd>None</cd>)
+                <li><ch>min_samples_split</ch> - more entries get split (<cd>2</cd>)
+                </li>
+                <li><ch>min_samples_leaf</ch> - leaf must be >= (<cd>1</cd>)</li>                 
+            </ul>
+
+            <p>... and more</p>
+        </section>
+        <section>
+            <h2>CART</h2>
+            <i>Classification and Regression Tree</i> - "growing" trees
+            <p>
+            <ol>
+                <li>Pick a feature <ch>\(f\)</ch> (best/random)</li>
+                <li>Pick best threshold <ch>\(t\)</ch> to maximize <ch>\(gain\)</ch></li>
+                <li>Split samples <ch>\(x\)</ch>:<br><ch>\(x_f \le t\)</ch> - left subnode<br><ch>\(x_f \gt t\)</ch> - right subnode</li>
+                <li>Repeat until done (node too small/tree too big)</li>
+            </ol>
+        </p>
+        </section>
+        <section>
+            <h2>Information Gain</h2>
+
+            increase of information<br>
+            reduction of entropy<br>
+            reduction of impurity
+
+            \[
+            IG = I_{parent} - {n_{left} \over n_{parent}} I_{left} - {n_{right} \over n_{parent}} I_{right}
+            \]
+            \(I\) - Impurity<br/>
+            \(n\) - number of samples
+        </section>
+        <section>
+            <h2>Impurity</h2>
+            \(p_i\) = proportion of class \(i\) in samples<br>
+             = probability we would randomly pick class \(i\)
+            \[\begin{aligned}
+            \textcolor{white}{Gini}    &amp; = &amp; 1 - \sum_{i}p_i^{2} &amp; = &amp;    &amp; \sum_{i}p_i \color{white}{(1-p_i)} \\
+            \textcolor{white}{Entropy} &amp; = &amp;                     &amp; = &amp; \color{white}{-}  &amp; \sum_{\substack{i\\p_i \not = 0}}p_i \color{white}{\log_2(p_i)} \\
+            \end{aligned} \]
+            (see <a href="https://scikit-learn.org/stable/modules/tree.html#classification-criteria">scikit-learn</a>)
+        </section>
+        <section>
+            <h2>Gini vs Entropy</h2>
+            <div id="giniVsEntropy">
+            <!-- see code at the end of presentation -->
+            </div>
+        </section>
+        <section>
+            <div id="decisionTree">
+
+            </div>
+        </section>
+        <section>
+            <h3>Acknowledgements</h3>
+            <div style="font-size: 24px; line-height: 36px;">
+                <a href="https://homl.info">Hands-On Machine Learning</a><br>
+                <a href="https://revealjs.com">Reveal.js</a><br>
+            </div>
+        </section>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.js" integrity="sha512-fEgazVdZLNymIm9n+b2jtCrM4DQiqNTfLNUxbsGSFUJpYemf9A8GxgJ3VAfU/Lc6yZkDdEOdekBDZtG/mf73fQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+  Reveal.initialize({
+    controls: false,
+    transition: 'none',
+    margin: 0.01,
+    plugins: [ RevealHighlight, RevealMath.KaTeX ],
+    dependencies: [
+      { src: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js', async: true },
+    ]
+  });
+
+// Skip to second to last slide on open presentation
+Reveal.addEventListener( 'ready', function( event ) {
+    Reveal.slide(Reveal.getSlides().length - 2);
+});
+
+// giniVsEntropy plot
+functionPlot({
+    target: "#giniVsEntropy",
+    width: 800,
+    height: 500,
+    disableZoom: true,
+    xAxis: { domain: [1e-5, 1-1e-5] },
+    yAxis: { domain: [0, 1.1] },
+    grid: true,
+    annotations: [
+        { text: "Entropy", y: 1 },
+        { text: "Gini", y: 0.5 },
+        { x: 0.5 }
+    ],
+    data: [
+        { fn: "x*(1-x) + (1-x)*x" },
+        { fn: "-x*log(x)/log(2) - (1-x)*log(1-x)/log(2)", color: "yellow" },
+        { fn: "(-x*log(x)/log(2) - (1-x)*log(1-x)/log(2)) / 2", graphType: "scatter", color: "yellow", nSamples: 100  },
+        { fn: "1-max(x, 1-x)", graphType: "scatter", color: "red", nSamples: 51 }
+    ]
+});
+
+// Tree editor
+
+function decisionTree() {
+    const classColors = [
+        "red", // Do not use!!
+        "yellow",
+        "aqua"
+    ];
+
+    const data = [
+    ];
+
+    // set the dimensions and margins of the graph
+    const width = 800;
+    const height = 600;
+
+    // Add X axis
+    const x = d3.scaleLinear().domain([0, 1]).range([ 0, width ]);
+
+    // Add Y axis
+    const y = d3.scaleLinear().domain([0, 1]).range([ height, 0]);
+
+    // X for impurity
+    const xi = d3.scaleLinear().domain([0, 1]).range([ 0, width ]);
+    // Y for impurity
+    const yi = d3.scaleLinear().domain([0, 1]).range([ height, height * 0.8 ]);
+
+    // append the svg object to the body of the page
+    const main = d3.select("#decisionTree");
+
+    function addPoint(event) {
+        const p = d3.pointer(event);
+        const newPoint = 
+        [
+            event.shiftKey ? 1 : 2, // Feature number, 1-based
+            x.invert(p[0]),
+            y.invert(p[1])
+        ];
+        data.push(newPoint);
+        update();
+    }
+        
+    const svg = main
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .on('click', function(event) {
+            addPoint(event);
+        });
+
+    const mainGroup = svg
+        .append("g");
+
+    const giniChart = svg
+        .append("g")
+        .append("path")
+        .style("stroke", "white")
+        .style("fill", "none");
+
+    const giniHoriz = svg
+        .append("g")
+        .append("line")
+        .style("stroke", "black");
+
+    function gini(values, count) {
+        var result = 0;
+        for(var i=1; i<values.length; i++) {
+            if(count>0) {
+                const v = values[i]/count;
+                result += v*v;
+            }
+        }
+        return 1 - result;
+    }
+
+    function bestGini(feature) {
+        // Get feature values + classes
+        const n = data.length;
+        const values = data.map((x) => x[feature]);
+        const classes = data.map((x) => x[0]);
+
+        // Class counts
+        const classCounts = [0, 0, 0];
+        for(var i = 0; i < n; i++) {
+            classCounts[classes[i]]++;
+        }
+
+        // Order by our axis
+        const order = nj.arange(values.length).tolist();
+        order.sort((i, j) => values[i] - values[j]);
+
+        // Current class count
+        const leftValues = [0, 0, 0];
+        const rightValues = classCounts.slice();
+        var best = Infinity;
+        var worst = 0;
+        var bestSplit = 0;
+
+        const ginis = [];
+        for(var i = 0; i <= n; i++) {
+            // Add point to left node
+            var j, value, cls, threshold;
+            if(i==0) {
+                threshold = values[order[0]];
+            } else {
+                // Update
+                j = order[i];
+                value = values[j];
+                cls = classes[j];
+                leftValues[cls]++;
+                rightValues[cls]--;
+                if(i==n-1) {
+                    threshold = values[order[n-1]];
+                } else {
+                    threshold = (value + values[order[i+1]]) / 2;
+                }
+            } 
+
+            const leftCount = i;
+            const rightCount = n-leftCount;
+            const impurityLeft = gini(leftValues, leftCount);
+            const impurityRight = gini(rightValues, rightCount);
+            const weightedLeft = impurityLeft * leftCount / n;
+            const weighedRight = impurityRight * rightCount / n;
+
+            const total = weightedLeft + weighedRight;
+            ginis.push([threshold, total]);
+            if(total > worst) {
+                worst = total;
+            }
+            if(total < best) {
+                best = total;
+                bestSplit = threshold;
+            }
+        }
+
+        if(best==worst) {
+            worst = worst+0.1;
+            best = best-0.1
+        }
+
+        return {
+            split: bestSplit,
+            best: best,
+            worst: worst,
+            ginis: ginis
+        }
+    }
+
+    function update() {
+        const {split:giniSplit, best, worst, ginis} = bestGini(1);
+
+        const path = d3.path();
+
+        for(var i=0; i<ginis.length; i++) {
+            var xg = xi(ginis[i][0]);
+            var yg = yi((ginis[i][1]-worst)/(best-worst));
+            if(i==0) {
+                path.moveTo(xg, yg);
+            } else
+                path.lineTo(xg, yg);
+        }
+
+        giniChart
+            .attr("d", path);
+
+        giniHoriz
+            .attr("x1", x(giniSplit))
+            .attr("y1", y(0))
+            .attr("x2", x(giniSplit))
+            .attr("y2", y(1));
+
+        mainGroup
+            .selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle")
+                .attr("cx", function (d) { return x(d[1]); } )
+                .attr("cy", function (d) { return y(d[2]); } )
+                .attr("r", 3)
+                .style("fill", function(d) { return classColors[d[0]]; });
+    }
+
+    update();
+}
+decisionTree();
+
+</script>
+</body>
+</html>
