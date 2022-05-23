@@ -129,25 +129,25 @@ tree_clf.fit(X_iris, y_iris)</code></pre>
         </p>
         </section>
         <section>
-            <h2>Information Gain</h2>
+            <h2>Gain</h2>
 
             increase of information<br>
             reduction of entropy<br>
             reduction of impurity
 
             \[
-            IG = I_{parent} - {n_{left} \over n_{parent}} I_{left} - {n_{right} \over n_{parent}} I_{right}
+            IG = I_{parent} - {m_{left} \over m_{parent}} I_{left} - {m_{right} \over m_{parent}} I_{right}
             \]
-            \(I\) - Impurity<br/>
-            \(n\) - number of samples
+            \(I\) - Impurity / Entropy<br/>
+            \(m\) - number of instances
         </section>
         <section>
             <h2>Impurity</h2>
-            \(p_i\) = proportion of class \(i\) in samples<br>
-             = probability we would randomly pick class \(i\)
+            \(p_k\) = proportion of class \(k\) in node<br>
+             = probability we would randomly pick class \(k\)
             \[\begin{aligned}
-            \textcolor{white}{Gini}    &amp; = &amp; 1 - \sum_{i}p_i^{2} &amp; = &amp;    &amp; \sum_{i}p_i \color{white}{(1-p_i)} \\
-            \textcolor{white}{Entropy} &amp; = &amp;                     &amp; = &amp; \color{white}{-}  &amp; \sum_{\substack{i\\p_i \not = 0}}p_i \color{white}{\log_2(p_i)} \\
+            \textcolor{white}{Gini}    &amp; = &amp; 1 - \sum_{k}p_k^{2} &amp; = &amp;    &amp; \sum_{k}p_k \color{white}{(1-p_k)} \\
+            \textcolor{white}{Entropy} &amp; = &amp;                     &amp; = &amp; \color{white}{-}  &amp; \sum_{\substack{k\\p_k \not = 0}}p_k \color{white}{\log_2(p_k)} \\
             \end{aligned} \]
             (see <a href="https://scikit-learn.org/stable/modules/tree.html#classification-criteria">scikit-learn</a>)
         </section>
@@ -778,6 +778,13 @@ function clampPoint(p) {
     return result;
 }
 
+function rank(arr, f) {
+    return arr
+    .map((x, i) => [x, i])
+    .sort((a, b) => f(a[0], b[0]))
+    .reduce((a, x, i, s) => (a[x[1]] =
+        i > 0 && f(s[i - 1][0], x[0]) === 0 ? a[s[i - 1][1]] : i + 1, a), []);
+}
 
 function rotate() {
     if(!activePlot) {
@@ -844,7 +851,17 @@ d3.select("body").on("keydown", function(event) {
                 if(activePlot) {
                     activePlot.message("max_depth = " + max_depth);
                 }
-            }            
+            } else if(event.code=="KeyA") { // Rank
+                origData = data;
+                const rank1 = rank(origData, (a, b) => a[1] - b[1]);
+                const rank2 = rank(origData, (a, b) => a[2] - b[2]);
+                const n = origData.length;
+                
+                for(var i=0; i<n; i++) {
+                    data[i][1] = rank1[i] / (n+1);
+                    data[i][2] = rank2[i] / (n+1);
+                }
+            }
 
             if(activePlot) {
                 activePlot.update();
