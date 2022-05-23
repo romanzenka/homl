@@ -6,4 +6,4 @@ Follows select chapters of Hands-On Machine Learning: https://github.com/ageron/
 
 ## Decision Trees (Chapter 6)
 
-[06_decision_trees/presentation.html](Slides)
+[Slides](06_decision_trees/)
