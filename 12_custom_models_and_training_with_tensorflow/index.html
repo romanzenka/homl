@@ -91,26 +91,26 @@
             2<sup>nd</sup> edition<br/>
             <a href="https://github.com/ageron/handson-ml3/blob/main/12_custom_models_and_training_with_tensorflow.ipynb">Chapter 12</a><br/>
         </section>
-        <section>
+        <section data-auto-animate>
             <h2>Chapter summary</h2>
             <ul>
                 <li>Brief description of TensorFlow</li>
                 <li>What is a tensor?</li>
                 <li>Customize Keras - losses, activations, initializers, regularizers, constraints, metrics</li>
-                <li>Autodiff</li>
+                <li>AutoDiff</li>
                 <li>Custom training loop</li>
-                <li>Functions and graphs, autograph</li>
+                <li>AutoGraph</li>
             </ul>
         </section>
-        <section>
+        <section data-auto-animate>
             <h2>Bottom-up approach</h2>
             <ul>
-                <li>What really is TensorFlow?</li>
+                <li>Brief description of TensorFlow</li>
                 <li>What is a tensor?</li>
-                <li>How do tensors "flow"?</li>
-                <li>Autograph</li>
-                <li>Autodiff</li>
-                <li>Look up customization patterns yourself</li>
+                <li>AutoGraph</li>
+                <li>AutoDiff</li>
+                <li style="text-decoration: line-through">Customize Keras - losses, activations, initializers, regularizers, constraints, metrics</li>
+                <li style="text-decoration: line-through">Custom training loop</li>
             </ul>
         </section>
         <section>
@@ -545,11 +545,144 @@ class Operation(object):
         </section>
 
         <section>
-            <h2>Operation</h2>
-            <pre>tensorflow/python/framework/ops.py</pre>
-            <pre class="tinyCode"><code class="python" data-line-numbers="|7-10" data-trim="true">
+            <h2>Tracing</h2>
+            <div class="twocolumn2_1">
+                <div>
+            <pre class="tinyCode noLines"><code class="python" data-line-numbers="1-7|9" data-trim="true">
+                @tf.function
+                def test(n):
+                    a = tf.constant(0.0, name="Zero")
+                    delta = tf.constant(1.0, name="One")
+                    for i in range(n):
+                        a = a + delta
+                    return tf.identity(a, name="Result")
+
+                f = test.get_concrete_function(4)
+                f.graph
             </code></pre>
+            </div><div>
+                <img src="img/graph5.png" style="height: 50%">
+            </div>
+            </div>
         </section>
+        <section>
+            <h2>Tracing</h2>
+            <div class="twocolumn2_1">
+                <div>
+            <pre class="tinyCode noLines"><code class="python" data-line-numbers="9" data-trim="true">
+                @tf.function
+                def test(n):
+                    a = tf.constant(0.0, name="Zero")
+                    delta = tf.constant(1.0, name="One")
+                    for i in range(n):
+                        a = a + delta
+                    return tf.identity(a, name="Result")
+
+                f = test.get_concrete_function(1000)
+                f.graph
+            </code></pre>
+            </div><div>
+                <img src="img/graph6.png">
+            </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>tf.range</h2>
+            <div class="twocolumn2_1">
+                <div>
+            <pre class="tinyCode noLines"><code class="python" data-line-numbers="5" data-trim="true">
+                @tf.function
+                def test(n):
+                    a = tf.constant(0.0, name="Zero")
+                    delta = tf.constant(1.0, name="One")
+                    for i in tf.range(n):
+                        a = a + delta
+                    return tf.identity(a, name="Result")
+
+                f = test.get_concrete_function(1000)
+                f.graph
+            </code></pre>
+            </div><div>
+                <img src="img/graph7.png">
+            </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Optimization</h2>
+            <div class="twocolumn2_1">
+                <div>
+            <pre class="tinyCode noLines"><code class="python" data-line-numbers="2-7|10-29" data-trim="true">
+                @tf.function
+                def test(n, a):
+                    for i in range(n):
+                        a = a + i
+                    return tf.identity(a, name="Result")    
+
+                g = test.get_concrete_function(5, tf.Variable(0.0)).graph
+
+
+                def constfold(graphdef, output_name):
+                    graph = tf.Graph()
+                    with graph.as_default():
+                        outputs = output_name.split(',')
+                        output_collection = meta_graph_pb2.CollectionDef()
+                        output_list = output_collection.node_list.value
+                        for output in outputs:
+                            output_list.append(output)
+                        importer.import_graph_def(graphdef, name="")
+                        metagraph = saver.export_meta_graph(
+                            graph_def=graph.as_graph_def(add_shapes=True), graph=graph)
+                        metagraph.collection_def["train_op"].CopyFrom(output_collection)
+                
+                    rewriter_config = rewriter_config_pb2.RewriterConfig()
+                    rewriter_config.optimizers.extend(["constfold"])
+                    rewriter_config.meta_optimizer_iterations = rewriter_config_pb2.RewriterConfig.ONE
+                    session_config = config_pb2.ConfigProto()
+                    session_config.graph_options.rewrite_options.CopyFrom(rewriter_config)
+            
+                    return tf_optimizer.OptimizeGraph(session_config, metagraph)
+            </code></pre>
+            </div><div>
+                <img src="img/graph8.png">
+            </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Constant folding</h2>
+            <div class="twocolumn">
+                <div><img src="img/graph8.png" height="40%"></div>
+                <div><img src="img/graph9.png" height="40%"></div>
+            </div>
+        </section>
+
+        <section>
+            <h2>AutoDiff</h2>
+            <div class="twocolumn">
+                <div>
+            <pre class="tinyCode noLines"><code class="python" data-line-numbers="1-2|4-8|10-12" data-trim="true">
+            def f(x):
+                return x ** tf.constant(2.0, name="Two")
+            
+            @tf.function
+            def dy_dx(x):
+                with tf.GradientTape() as tape:
+                    y = f(x)
+                return tape.gradient(y, x)
+            
+            x = tf.Variable(1.0, name="One")
+            
+            g = dy_dx.get_concrete_function(x).graph
+            </code></pre>
+            </div><div>
+                <img src="img/graph10.png">
+            </div>
+            </div>
+        </section>
+
+        <section data-background="img/graph11.png" data-background-size="contain"></section>
 
         <section>
             <h3>Acknowledgements</h3>
