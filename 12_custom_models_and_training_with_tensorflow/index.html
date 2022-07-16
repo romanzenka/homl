@@ -528,7 +528,7 @@ class Operation(object):
             <pre class="tinyCode noLines"><code class="python" data-line-numbers="3-4|10-11" data-trim="true">
                 a = tf.Variable(0.0, name="A")
 
-                @tf.function
+                @tf.function # 🦄🌈
                 def test(a):
                     before = tf.identity(a, name="Before")
                     c = tf.constant(1.0, name="One")
