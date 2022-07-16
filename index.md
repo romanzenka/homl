@@ -7,3 +7,7 @@ Follows [select chapters of Hands-On Machine Learning](https://github.com/ageron
 ## Decision Trees (Chapter 6)
 
 [Slides](06_decision_trees/)
+
+## Custom Models and Training with Tensorflow (Chapter 12)
+
+[Slides](12_custom_models_and_training_with_tensorflow/)
