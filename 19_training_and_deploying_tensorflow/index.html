@@ -1,0 +1,862 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css" integrity="sha512-ITH3NSfntO7uI5n+BnxGNXpzDUoOsmAXuG37UDONLxNYIdc0EBBOOQ1xyc+t9ag9ETSuBXFApx+Rod0uURfDYw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/moon.min.css" integrity="sha512-mzpbI+YpB+bIH9gpH3cBq4u5+YvyAikkgAR4SODr5ZpzBZZtLddurEa5LoJRqRfVc6IUfqj6klr0e9KJjUtKHw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/monokai.min.css" integrity="sha512-z8wQkuDRFwCBfoj7KOiu1MECaRVoXx6rZQWL21x0BsVVH7JkqCp1Otf39qve6CrCycOOL5o9vgfII5Smds23rg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/highlight.min.js" integrity="sha512-U3fPDUX5bMrn1wnYqjaK44MFA9E6MKS+zPAg9WPAGF5XhReBeDj3FGaA831CjueG+YJxYA3WaO/m33kMIoOs/A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/math/math.min.js" integrity="sha512-pIUSGiNwAKHXxIcFxTZZ6RC536f6dHQn3LPYUmilYzayjdH4C4GUNo9T9a6VbkUh3rHSsM52nG8kWOg+16oLFg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/function-plot/1.22.8/function-plot.js" integrity="sha512-5q5FX8Fdy/bUEurwyMuC8g6Jv083LrK4yry74q0Xl1NTXsRio0h1BRiRkRwsTP1CJ92zduGh4ug4RBUPzmT3wA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.4.4/d3.min.js" integrity="sha512-hnFpvCiJ8Fr1lYLqcw6wLgFUOEZ89kWCkO+cEekwcWPIPKyknKV1eZmSSG3UxXfsSuf+z/SgmiYB1zFOg3l2UQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numjs/0.16.1/numjs.min.js" integrity="sha512-OSMx44HuCHhy3eXrRbRpRX47stz3U4WITFjPlznK4rxqQQM0nj4lK6u0UcyaCQcWTUNUDKHCLHoLqwmEwygE9w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <style type="text/css">
+        body {
+            background-color: black !important;
+        }
+        .highlight {
+            color: white;
+        }
+        .smallCode code {
+            font-size: 20px;
+            line-height: 30px;
+        }
+
+        .tinyCode code {
+            font-size: 15px;
+            line-height: 20px;
+        }
+
+        .noLines code .hljs-ln-numbers {
+            display: none;
+        }
+
+        c, ch, cd {
+            display: inline-block;
+            font-family: monospace;
+        }
+
+        ch { /* Code highlight */
+            color: white;
+        }
+
+        c { /* Inline code */
+            color: #717680;
+        }
+
+        cd { /* Inline code default */
+            color: #a6e22e;
+        }
+
+        im { color: white }
+
+        ::selection {
+            background: #ffb7b7;
+        }
+
+        .twocolumn {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 10px;
+            text-align: left;
+        }
+
+        .twocolumn2_1 {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-gap: 10px;
+            text-align: left;
+        }
+
+        .function-plot .tick text {
+            font-size: 20px;
+        }
+        .function-plot .tick line {
+            stroke-width: 2px;
+        }
+        .function-plot .annotations text {
+            font-size: 20px;
+            fill: white;
+        }
+        .function-plot .annotations path {
+            stroke: black;
+            stroke-width: 2px;
+        }
+    </style>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section id="home">
+            <h2>Training and Deploying TensorFlow Models at Scale</h2>
+            Roman Ženka<br>
+            <br/>
+            <a href="https://homl.info">Hands-On Machine Learning</a><br/>
+            2<sup>nd</sup> edition<br/>
+            <a href="https://github.com/ageron/handson-ml3/blob/main/19_training_and_deploying_at_scale.ipynb">Chapter 19</a><br/>
+        </section>
+
+        <section>
+            <h2>Chapter summary</h2>
+            <ul>
+                <li>Deploy Model at Scale</li>
+                <li>Train Model at Scale</li>
+            </ul>
+        </section>
+
+        <section data-auto-animate>
+            <h2>Deploy Model</h2>
+            <ol>
+                <li>Train model</li>
+                <li>Export model</li>
+                <li>Optimize model</li>
+                <li>Load into serving wrapper</li>
+                <li>Access model</li>
+            </ol>
+        </section>
+
+        <section data-auto-animate>
+            <h2>Deploy Model</h2>
+            <ol>
+                <li style="text-decoration: line-through">Train model</li>
+                <li class="highlight">Export model</li>
+                <li>Optimize model</li>
+                <li>Load into serving wrapper</li>
+                <li>Access model</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>Export Model</h2>
+            <ul>
+                <li class="highlight">SavedModel</li>
+                <li>HDF5</li>
+                <li>FlatBuffers</li>
+                <li>TensorFlow.js Layers</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>SavedModel</h2>
+            <pre>tensorflow/core/protobuf/saved_model.proto</pre>
+            <pre class="tinyCode"><code class="protobuf" data-line-numbers="9,11,18" data-trim="true">
+                syntax = "proto3";
+
+                package tensorflow;
+                
+                import "tensorflow/core/protobuf/meta_graph.proto";
+
+                // ...
+                
+                // SavedModel is the high level serialization format for TensorFlow Models.
+                // See [todo: doc links, similar to session_bundle] for more information.
+                message SavedModel {
+                  // The schema version of the SavedModel instance. Used for versioning when
+                  // making future changes to the specification/implementation. Initial value
+                  // at release will be 1.
+                  int64 saved_model_schema_version = 1;
+                
+                  // One or more MetaGraphs.
+                  repeated MetaGraphDef meta_graphs = 2;
+                }              
+            </code></pre>
+        </section>
+
+        <section>
+            <h2>MetaGraph</h2>
+            <pre>tensorflow/core/protobuf/meta_graph.proto</pre>
+            <pre class="tinyCode"><code class="protobuf" data-line-numbers="23-34|77-78|80-81|83-85|91-92|87-89|317-331" data-trim="true">
+                syntax = "proto3";
+
+                package tensorflow;
+                
+                import "google/protobuf/any.proto";
+                import "tensorflow/core/framework/graph.proto";
+                import "tensorflow/core/framework/op_def.proto";
+                import "tensorflow/core/framework/tensor_shape.proto";
+                import "tensorflow/core/framework/types.proto";
+                import "tensorflow/core/protobuf/saved_object_graph.proto";
+                import "tensorflow/core/protobuf/saver.proto";
+                import "tensorflow/core/protobuf/struct.proto";
+                
+                option cc_enable_arenas = true;
+                option java_outer_classname = "MetaGraphProtos";
+                option java_multiple_files = true;
+                option java_package = "org.tensorflow.framework";
+                option go_package = "github.com/tensorflow/tensorflow/tensorflow/go/core/protobuf/for_core_protos_go_proto";
+                
+                // NOTE: This protocol buffer is evolving, and will go through revisions in the
+                // coming months.
+                //
+                // Protocol buffer containing the following which are necessary to restart
+                // training, run inference. It can be used to serialize/de-serialize memory
+                // objects necessary for running computation in a graph when crossing the
+                // process boundary. It can be used for long term storage of graphs,
+                // cross-language execution of graphs, etc.
+                //   MetaInfoDef
+                //   GraphDef
+                //   SaverDef
+                //   CollectionDef
+                //   TensorInfo
+                //   SignatureDef
+                message MetaGraphDef {
+                  // Meta information regarding the graph to be exported.  To be used by users
+                  // of this protocol buffer to encode information regarding their meta graph.
+                  message MetaInfoDef {
+                    // User specified Version string. Can be the name of the model and revision,
+                    // steps this model has been trained to, etc.
+                    string meta_graph_version = 1;
+                
+                    // A copy of the OpDefs used by the producer of this graph_def.
+                    // Descriptions and Ops not used in graph_def are stripped out.
+                    OpList stripped_op_list = 2;
+                
+                    // A serialized protobuf. Can be the time this meta graph is created, or
+                    // modified, or name of the model.
+                    google.protobuf.Any any_info = 3;
+                
+                    // User supplied tag(s) on the meta_graph and included graph_def.
+                    //
+                    // MetaGraphDefs should be tagged with their capabilities or use-cases.
+                    // Examples: "train", "serve", "gpu", "tpu", etc.
+                    // These tags enable loaders to access the MetaGraph(s) appropriate for a
+                    // specific use-case or runtime environment.
+                    repeated string tags = 4;
+                
+                    // The __version__ string of the tensorflow build used to write this graph.
+                    // This will be populated by the framework, which will overwrite any user
+                    // supplied value.
+                    string tensorflow_version = 5;
+                
+                    // The __git_version__ string of the tensorflow build used to write this
+                    // graph. This will be populated by the framework, which will overwrite any
+                    // user supplied value.
+                    string tensorflow_git_version = 6;
+                
+                    // A flag to denote whether default-valued attrs have been stripped from
+                    // the nodes in this graph_def.
+                    bool stripped_default_attrs = 7;
+                
+                    // FunctionDef name to aliases mapping.
+                    map<string, string> function_aliases = 8;
+                  }
+                  MetaInfoDef meta_info_def = 1;
+                
+                  // GraphDef.
+                  GraphDef graph_def = 2;
+                
+                  // SaverDef.
+                  SaverDef saver_def = 3;
+                
+                  // collection_def: Map from collection name to collections.
+                  // See CollectionDef section for details.
+                  map<string, CollectionDef> collection_def = 4;
+                
+                  // signature_def: Map from user supplied key for a signature to a single
+                  // SignatureDef.
+                  map<string, SignatureDef> signature_def = 5;
+                
+                  // Asset file def to be used with the defined graph.
+                  repeated AssetFileDef asset_file_def = 6;
+                
+                  // Extra information about the structure of functions and stateful objects.
+                  SavedObjectGraph object_graph_def = 7;
+                }
+                
+                // CollectionDef should cover most collections.
+                // To add a user-defined collection, do one of the following:
+                // 1. For simple data types, such as string, int, float:
+                //      tf.add_to_collection("your_collection_name", your_simple_value)
+                //    strings will be stored as bytes_list.
+                //
+                // 2. For Protobuf types, there are three ways to add them:
+                //    1) tf.add_to_collection("your_collection_name",
+                //         your_proto.SerializeToString())
+                //
+                //       collection_def {
+                //         key: "user_defined_bytes_collection"
+                //         value {
+                //           bytes_list {
+                //             value: "queue_name: \"test_queue\"\n"
+                //           }
+                //         }
+                //       }
+                //
+                //  or
+                //
+                //    2) tf.add_to_collection("your_collection_name", str(your_proto))
+                //
+                //       collection_def {
+                //         key: "user_defined_string_collection"
+                //         value {
+                //          bytes_list {
+                //             value: "\n\ntest_queue"
+                //           }
+                //         }
+                //       }
+                //
+                //  or
+                //
+                //    3) any_buf = any_pb2.Any()
+                //       tf.add_to_collection("your_collection_name",
+                //         any_buf.Pack(your_proto))
+                //
+                //       collection_def {
+                //         key: "user_defined_any_collection"
+                //         value {
+                //           any_list {
+                //             value {
+                //               type_url: "type.googleapis.com/tensorflow.QueueRunnerDef"
+                //               value: "\n\ntest_queue"
+                //             }
+                //           }
+                //         }
+                //       }
+                //
+                // 3. For Python objects, implement to_proto() and from_proto(), and register
+                //    them in the following manner:
+                //    ops.register_proto_function("your_collection_name",
+                //                                proto_type,
+                //                                to_proto=YourPythonObject.to_proto,
+                //                                from_proto=YourPythonObject.from_proto)
+                //    These functions will be invoked to serialize and de-serialize the
+                //    collection. For example,
+                //    ops.register_proto_function(ops.GraphKeys.GLOBAL_VARIABLES,
+                //                                proto_type=variable_pb2.VariableDef,
+                //                                to_proto=Variable.to_proto,
+                //                                from_proto=Variable.from_proto)
+                message CollectionDef {
+                  // NodeList is used for collecting nodes in graph. For example
+                  // collection_def {
+                  //   key: "summaries"
+                  //   value {
+                  //     node_list {
+                  //       value: "input_producer/ScalarSummary:0"
+                  //       value: "shuffle_batch/ScalarSummary:0"
+                  //       value: "ImageSummary:0"
+                  //     }
+                  //   }
+                  message NodeList {
+                    repeated string value = 1;
+                  }
+                
+                  // BytesList is used for collecting strings and serialized protobufs. For
+                  // example:
+                  // collection_def {
+                  //   key: "trainable_variables"
+                  //   value {
+                  //     bytes_list {
+                  //       value: "\n\017conv1/weights:0\022\024conv1/weights/Assign
+                  //              \032\024conv1/weights/read:0"
+                  //       value: "\n\016conv1/biases:0\022\023conv1/biases/Assign\032
+                  //              \023conv1/biases/read:0"
+                  //     }
+                  //   }
+                  // }
+                  message BytesList {
+                    repeated bytes value = 1;
+                  }
+                
+                  // Int64List is used for collecting int, int64 and long values.
+                  message Int64List {
+                    repeated int64 value = 1 [packed = true];
+                  }
+                
+                  // FloatList is used for collecting float values.
+                  message FloatList {
+                    repeated float value = 1 [packed = true];
+                  }
+                
+                  // AnyList is used for collecting Any protos.
+                  message AnyList {
+                    repeated google.protobuf.Any value = 1;
+                  }
+                
+                  oneof kind {
+                    NodeList node_list = 1;
+                    BytesList bytes_list = 2;
+                    Int64List int64_list = 3;
+                    FloatList float_list = 4;
+                    AnyList any_list = 5;
+                  }
+                }
+                
+                // Information about a Tensor necessary for feeding or retrieval.
+                message TensorInfo {
+                  // For sparse tensors, The COO encoding stores a triple of values, indices,
+                  // and shape.
+                  message CooSparse {
+                    // The shape of the values Tensor is [?].  Its dtype must be the dtype of
+                    // the SparseTensor as a whole, given in the enclosing TensorInfo.
+                    string values_tensor_name = 1;
+                
+                    // The indices Tensor must have dtype int64 and shape [?, ?].
+                    string indices_tensor_name = 2;
+                
+                    // The dynamic logical shape represented by the SparseTensor is recorded in
+                    // the Tensor referenced here.  It must have dtype int64 and shape [?].
+                    string dense_shape_tensor_name = 3;
+                  }
+                
+                  // Generic encoding for composite tensors.
+                  message CompositeTensor {
+                    // The serialized TypeSpec for the composite tensor.
+                    TypeSpecProto type_spec = 1;
+                
+                    // A TensorInfo for each flattened component tensor.
+                    repeated TensorInfo components = 2;
+                  }
+                
+                  oneof encoding {
+                    // For dense `Tensor`s, the name of the tensor in the graph.
+                    string name = 1;
+                    // There are many possible encodings of sparse matrices
+                    // (https://en.wikipedia.org/wiki/Sparse_matrix).  Currently, TensorFlow
+                    // uses only the COO encoding.  This is supported and documented in the
+                    // SparseTensor Python class.
+                    CooSparse coo_sparse = 4;
+                    // Generic encoding for CompositeTensors.
+                    CompositeTensor composite_tensor = 5;
+                  }
+                  DataType dtype = 2;
+                  // The static shape should be recorded here, to the extent that it can
+                  // be known in advance.  In the case of a SparseTensor, this field describes
+                  // the logical shape of the represented tensor (aka dense_shape).
+                  TensorShapeProto tensor_shape = 3;
+                }
+                
+                // SignatureDef defines the signature of a computation supported by a TensorFlow
+                // graph.
+                //
+                // For example, a model with two loss computations, sharing a single input,
+                // might have the following signature_def map, in a MetaGraphDef message.
+                //
+                // Note that across the two SignatureDefs "loss_A" and "loss_B", the input key,
+                // output key, and method_name are identical, and will be used by system(s) that
+                // implement or rely upon this particular loss method. The output tensor names
+                // differ, demonstrating how different outputs can exist for the same method.
+                //
+                // signature_def {
+                //   key: "loss_A"
+                //   value {
+                //     inputs {
+                //       key: "input"
+                //       value {
+                //         name: "input:0"
+                //         dtype: DT_STRING
+                //         tensor_shape: ...
+                //       }
+                //     }
+                //     outputs {
+                //       key: "loss_output"
+                //       value {
+                //         name: "loss_output_A:0"
+                //         dtype: DT_FLOAT
+                //         tensor_shape: ...
+                //       }
+                //     }
+                //     method_name: "some/package/compute_loss"
+                //   }
+                //   ...
+                // }
+                // signature_def {
+                //   key: "loss_B"
+                //   value {
+                //     inputs {
+                //       key: "input"
+                //       value {
+                //         name: "input:0"
+                //         dtype: DT_STRING
+                //         tensor_shape: ...
+                //       }
+                //     }
+                //     outputs {
+                //       key: "loss_output"
+                //       value {
+                //         name: "loss_output_B:0"
+                //         dtype: DT_FLOAT
+                //         tensor_shape: ...
+                //       }
+                //     }
+                //     method_name: "some/package/compute_loss"
+                //   }
+                //   ...
+                // }
+                message SignatureDef {
+                  // Named input parameters.
+                  map<string, TensorInfo> inputs = 1;
+                  // Named output parameters.
+                  map<string, TensorInfo> outputs = 2;
+                  // Extensible method_name information enabling third-party users to mark a
+                  // SignatureDef as supporting a particular method. This enables producers and
+                  // consumers of SignatureDefs, e.g. a model definition library and a serving
+                  // library to have a clear hand-off regarding the semantics of a computation.
+                  //
+                  // Note that multiple SignatureDefs in a single MetaGraphDef may have the same
+                  // method_name. This is commonly used to support multi-headed computation,
+                  // where a single graph computation may return multiple results.
+                  string method_name = 3;
+                }
+                
+                // An asset file def for a single file or a set of sharded files with the same
+                // name.
+                message AssetFileDef {
+                  // The tensor to bind the asset filename to.
+                  TensorInfo tensor_info = 1;
+                  // The filename within an assets directory. Note: does not include the path
+                  // prefix, i.e. directories. For an asset at /tmp/path/vocab.txt, the filename
+                  // would be "vocab.txt".
+                  string filename = 2;
+                }
+            </code></pre>
+        </section>
+
+        <section>
+            <h2>GraphDef</h2>
+            <pre>tensorflow/core/framework/graph.proto</pre>
+            <pre class="tinyCode"><code class="protobuf" data-line-numbers="15-17" data-trim="true">
+                syntax = "proto3";
+
+                package tensorflow;
+                
+                import "tensorflow/core/framework/function.proto";
+                import "tensorflow/core/framework/node_def.proto";
+                import "tensorflow/core/framework/versions.proto";
+                
+                option cc_enable_arenas = true;
+                option java_outer_classname = "GraphProtos";
+                option java_multiple_files = true;
+                option java_package = "org.tensorflow.framework";
+                option go_package = "github.com/tensorflow/tensorflow/tensorflow/go/core/framework/graph_go_proto";
+                
+                // Represents the graph of operations
+                message GraphDef {
+                  repeated NodeDef node = 1;
+                
+                  // Compatibility versions of the graph.  See core/public/version.h for version
+                  // history.  The GraphDef version is distinct from the TensorFlow version, and
+                  // each release of TensorFlow will support a range of GraphDef versions.
+                  VersionDef versions = 4;
+                
+                  // Deprecated single version field; use versions above instead.  Since all
+                  // GraphDef changes before "versions" was introduced were forward
+                  // compatible, this field is entirely ignored.
+                  int32 version = 3 [deprecated = true];
+                
+                  // "library" provides user-defined functions.
+                  //
+                  // Naming:
+                  //   * library.function.name are in a flat namespace.
+                  //     NOTE: We may need to change it to be hierarchical to support
+                  //     different orgs. E.g.,
+                  //     { "/google/nn", { ... }},
+                  //     { "/google/vision", { ... }}
+                  //     { "/org_foo/module_bar", { ... }}
+                  //     map<string, FunctionDefLib> named_lib;
+                  //   * If node[i].op is the name of one function in "library",
+                  //     node[i] is deemed as a function call. Otherwise, node[i].op
+                  //     must be a primitive operation supported by the runtime.
+                  //
+                  //
+                  // Function call semantics:
+                  //
+                  //   * The callee may start execution as soon as some of its inputs
+                  //     are ready. The caller may want to use Tuple() mechanism to
+                  //     ensure all inputs are ready in the same time.
+                  //
+                  //   * The consumer of return values may start executing as soon as
+                  //     the return values the consumer depends on are ready.  The
+                  //     consumer may want to use Tuple() mechanism to ensure the
+                  //     consumer does not start until all return values of the callee
+                  //     function are ready.
+                  FunctionDefLibrary library = 2;
+                }
+            </code></pre>
+        </section>
+
+        <section>
+            <h2>NodeDef</h2>
+            <pre>tensorflow/core/framework/node.proto</pre>
+            <pre class="tinyCode"><code class="protobuf" data-line-numbers="13|14-17|19-21|23-28|34-50|52-64" data-trim="true">
+                syntax = "proto3";
+
+                package tensorflow;
+                
+                import "tensorflow/core/framework/attr_value.proto";
+                
+                option cc_enable_arenas = true;
+                option java_outer_classname = "NodeProto";
+                option java_multiple_files = true;
+                option java_package = "org.tensorflow.framework";
+                option go_package = "github.com/tensorflow/tensorflow/tensorflow/go/core/framework/node_def_go_proto";
+                
+                message NodeDef {
+                  // The name given to this operator. Used for naming inputs,
+                  // logging, visualization, etc.  Unique within a single GraphDef.
+                  // Must match the regexp "[A-Za-z0-9.][A-Za-z0-9_>./]*".
+                  string name = 1;
+                
+                  // The operation name.  There may be custom parameters in attrs.
+                  // Op names starting with an underscore are reserved for internal use.
+                  string op = 2;
+                
+                  // Each input is "node:src_output" with "node" being a string name and
+                  // "src_output" indicating which output tensor to use from "node". If
+                  // "src_output" is 0 the ":0" suffix can be omitted.  Regular inputs
+                  // may optionally be followed by control inputs that have the format
+                  // "^node".
+                  repeated string input = 3;
+                
+                  // A (possibly partial) specification for the device on which this
+                  // node should be placed.
+                  // The expected syntax for this string is as follows:
+                  //
+                  // DEVICE_SPEC ::= PARTIAL_SPEC
+                  //
+                  // PARTIAL_SPEC ::= ("/" CONSTRAINT) *
+                  // CONSTRAINT ::= ("job:" JOB_NAME)
+                  //              | ("replica:" [1-9][0-9]*)
+                  //              | ("task:" [1-9][0-9]*)
+                  //              | ("device:" [A-Za-z]* ":" ([1-9][0-9]* | "*") )
+                  //
+                  // Valid values for this string include:
+                  // * "/job:worker/replica:0/task:1/device:GPU:3"  (full specification)
+                  // * "/job:worker/device:GPU:3"                   (partial specification)
+                  // * ""                                    (no specification)
+                  //
+                  // If the constraints do not resolve to a single device (or if this
+                  // field is empty or not present), the runtime will attempt to
+                  // choose a device automatically.
+                  string device = 4;
+                
+                  // Operation-specific graph-construction-time configuration.
+                  // Note that this should include all attrs defined in the
+                  // corresponding OpDef, including those with a value matching
+                  // the default -- this allows the default to change and makes
+                  // NodeDefs easier to interpret on their own.  However, if
+                  // an attr with a default is not specified in this list, the
+                  // default will be used.
+                  // The "names" (keys) must match the regexp "[a-z][a-z0-9_]+" (and
+                  // one of the names from the corresponding OpDef's attr field).
+                  // The values must have a type matching the corresponding OpDef
+                  // attr's type field.
+                  // TODO(josh11b): Add some examples here showing best practices.
+                  map<string, AttrValue> attr = 5;
+                
+                  message ExperimentalDebugInfo {
+                    // Opaque string inserted into error messages created by the runtime.
+                    //
+                    // This is intended to store the list of names of the nodes from the
+                    // original graph that this node was derived. For example if this node, say
+                    // C, was result of a fusion of 2 nodes A and B, then 'original_node' would
+                    // be {A, B}. This information can be used to map errors originating at the
+                    // current node to some top level source code.
+                    repeated string original_node_names = 1;
+                
+                    // This is intended to store the list of names of the functions from the
+                    // original graph that this node was derived. For example if this node, say
+                    // C, was result of a fusion of node A in function FA and node B in function
+                    // FB, then `original_funcs` would be {FA, FB}. If the node is in the top
+                    // level graph, the `original_func` is empty. This information, with the
+                    // `original_node_names` can be used to map errors originating at the
+                    // current ndoe to some top level source code.
+                    repeated string original_func_names = 2;
+                  }
+                
+                  // This stores debug information associated with the node.
+                  ExperimentalDebugInfo experimental_debug_info = 6;
+                }</code></pre>
+        </section>
+
+        <section>
+            <h2>SavedModel Issues</h2>
+            <table>
+                <tr><td>No custom python&nbsp;functions</td><td>Provide function map on load</td></tr>
+                <tr><td>One big blob</td><td>TensorFlow.js Layers, sharding</td></tr>
+                <tr><td>Large memory requirements</td><td>TFLite convert bit widths, quantization, run in integers</td></tr>
+                <tr><td>Slow parsing</td><td>Use FlatBuffers that map into memory directly</td></tr>
+                <tr><td>Google-specific</td><td>Store as HDF5</td></tr>
+            </table>
+        </section>
+
+        <section data-auto-animate>
+            <h2>Deploy Model</h2>
+            <ol>
+                <li style="text-decoration: line-through">Train model</li>
+                <li>Export model</li>
+                <li>Optimize model</li>
+                <li>Load into serving wrapper</li>
+                <li>Access model</li>
+            </ol>
+        </section>               
+
+        <section data-auto-animate>
+            <h2>Deploy Model</h2>
+            <ol>
+                <li style="text-decoration: line-through">Train model</li>
+                <li style="text-decoration: line-through">Export model</li>
+                <li class="highlight">Optimize model</li>
+                <li>Load into serving wrapper</li>
+                <li>Access model</li>
+            </ol>
+        </section>      
+        
+        <section>
+            <h2>Optimize model</h2>
+            <a href="https://tfhub.dev/google/aiy/vision/classifier/food_V1/1" target="food">Example food model</a>
+            <p>
+            <a href="https://lutzroeder.github.io/netron" target="netron">Netron</a> <a href="https://lutzroeder.github.io/netron" target="netron2">Visualizer</a>
+        </section>
+
+        <section>
+            <div style="display: grid; grid-auto-flow: column" class="stretch">
+            <iframe data-src="https://lutzroeder.github.io/netron" style="width: 100%; height: 100%"></iframe>
+            <iframe data-src="https://lutzroeder.github.io/netron" style="width: 100%; height: 100%"></iframe>
+        </div>
+        </section>
+
+        <section data-auto-animate>
+            <h2>Deploy Model</h2>
+            <ol>
+                <li style="text-decoration: line-through">Train model</li>
+                <li style="text-decoration: line-through">Export model</li>
+                <li style="text-decoration: line-through">Optimize model</li>
+                <li class="highlight">Load into serving wrapper</li>
+                <li>Access model</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>Load into serving wrapper</h2>
+            <ul>
+                <li><code>docker pull tensorflow/serving</code></li>
+                <li>Kubernetes - Load Balancer + many TF Serving backends</li>
+                <li>Google Cloud Platform</li>
+                <li>Bake into device</li>
+                <li>Run in browser</li>                
+            </ul>
+        </section>
+
+        <section>
+            <h2>Deploy Model</h2>
+            <ol>
+                <li style="text-decoration: line-through">Train model</li>
+                <li style="text-decoration: line-through">Export model</li>
+                <li style="text-decoration: line-through">Optimize model</li>
+                <li style="text-decoration: line-through">Load into serving wrapper</li>
+                <li class="highlight">Access model</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>Access Model</h2>
+            <ul>
+                <li><span class="highlight">REST</span> - REpresentational State Transfer</li>
+                <li><span class="highlight">gRPC</span> - Google Remote Procedure Call
+                    <ul>
+                        <li>Protocol buffers over network</li>
+                        <li>Streaming queries/responses</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Train at Scale</h2>
+            <img src="img/a100.jpeg">
+        </section>        
+
+        <section>
+            <h2>Train at Scale</h2>
+            <img src="img/GCP_A2.max-1600x1600.jpg">
+        </section>
+
+        <section>
+            <h2>Multiple Device Training</h2>
+            <ul>
+                <li>Model parallelism
+                    <ul>
+                        <li>Slice model, distribute</li>
+                        <li>Frequent communication</li>
+                    </ul>
+                </li>
+                <li>Data parallelism
+                    <ul>
+                        <li>Identical model is shared</li>
+                        <li>Separate minibatches</li>
+                        <li>Synchronize results</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Distribution Strategy</h2>
+            <ul>
+                <li>Special TF context</li>
+                <li>Intercepts TF calls</li>
+                <li>Distributes variables</li>
+                <li>Offers <code>run</code>, <code>gather</code> and <code>reduce</code></li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Custom training loop</h2>
+            <pre class="tinyCode"><code class="python" data-line-numbers="1|10|11-12|15" data-trim="true">
+    with my_strategy.scope():
+        @tf.function
+        def distribute_train_epoch(dataset):
+            def replica_fn(input):
+                # process input and return result
+                return result
+            
+            total_result = 0
+            for x in dataset:
+                per_replica_result = my_strategy.run(replica_fn, args=(x,))
+                total_result += my_strategy.reduce(tf.distribute.ReduceOp.SUM,
+                                per_replica_result, axis=None)
+            return total_result
+
+    dist_dataset = my_strategy.experimental_distribute_dataset(dataset)
+    for _ in range(EPOCHS):
+        train_result = distribute_train_epoch(dist_dataset)
+    </code></pre>
+        </section>
+
+        <section>
+            <h2>Acknowledgements</h2>
+            <div style="font-size: 24px; line-height: 36px;">
+                <a href="https://homl.info">Hands-On Machine Learning</a><br>
+                <a href="https://revealjs.com">Reveal.js</a><br>
+                <a href="https://www.servethehome.com/google-cloud-nvidia-a100-instance-launched/">A100 image</a>
+                <a href="https://cloud.google.com/blog/products/compute/announcing-google-cloud-a2-vm-family-based-on-nvidia-a100-gpu">A2-MegaGPU VM diagram</a>
+            </div>
+        </section>
+        <section>
+            <a href="https://github.com/romanzenka/homl">github.com / romanzenka / homl</a>
+        </section>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.js" integrity="sha512-fEgazVdZLNymIm9n+b2jtCrM4DQiqNTfLNUxbsGSFUJpYemf9A8GxgJ3VAfU/Lc6yZkDdEOdekBDZtG/mf73fQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+  Reveal.initialize({
+    controls: false,
+    transition: 'none',
+    margin: 0.01,
+    plugins: [ RevealHighlight, RevealMath.KaTeX ],
+    dependencies: [
+      { src: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js', async: true },
+    ]
+  });
+
+
+// Skip to second to last slide on open presentation
+Reveal.addEventListener( 'ready', function( event ) {
+    Reveal.slide(Reveal.getSlides().length - 4);
+});
+
+</script>
+</body>
+</html>

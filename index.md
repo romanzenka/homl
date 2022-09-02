@@ -11,3 +11,7 @@ Follows [select chapters of Hands-On Machine Learning](https://github.com/ageron
 ## Custom Models and Training with Tensorflow (Chapter 12)
 
 [Slides](12_custom_models_and_training_with_tensorflow/)
+
+## Training and Deploying TensorFlow Models at Scale
+
+[Slides](19_training_and_deploying_tensorflow/)
