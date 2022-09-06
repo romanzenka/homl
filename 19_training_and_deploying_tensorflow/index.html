@@ -734,7 +734,7 @@
                 <li><code>docker pull tensorflow/serving</code></li>
                 <li>Kubernetes - Load Balancer + many TF Serving backends</li>
                 <li>Google Cloud Platform</li>
-                <li>Bake into device</li>
+                <li>In app for device</li>
                 <li>Run in browser</li>                
             </ul>
         </section>
@@ -823,6 +823,28 @@
     for _ in range(EPOCHS):
         train_result = distribute_train_epoch(dist_dataset)
     </code></pre>
+        </section>
+
+        <section>
+            <h2>Strategies</h2>
+            <ul>
+                <li>Mirrored</li>
+                <li>Multi Worker Mirrored</li>
+                <li>TPU</li>
+                <li>Parameter Server</li>
+                <li>Central Storage</li>
+                <li>One Device</li>
+            </ul>            
+        </section>
+
+        <section>
+            <h2>NCCL</h2>
+            NVIDIA Collective Communication library
+            <ul>
+                <li>multi-GPU and multi-node communication primitives</li>
+                <li><a href="https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/usage/collectives.html" target="_blank">all-reduce</a>, all-gather, broadcast, reduce, reduce-scatter</li>
+                <li>high bandwidth / low latency</li>
+            </ul>
         </section>
 
         <section>
